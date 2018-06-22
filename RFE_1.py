@@ -5,7 +5,7 @@ from time import strftime
 from datetime import datetime
 import numpy as np
 import pandas
-#import RFExplorer
+import RFExplorer
 
 class MainWindow(QtGui.QDialog):
 
