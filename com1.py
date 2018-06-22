@@ -213,19 +213,19 @@ class MainWindow(QtGui.QDialog):
 		self.stopBtn.setEnabled(False)
 		self.lcd2.display(0)
 		self.exportBtn.setEnabled(False)
+		self.exportBtn.setText("Export to CSV")
 		self.resetBtn.setText("Reset")
 
 	def exportBtnClicked(self):
 		text, ok = QtGui.QInputDialog.getText(self, 'Export', 'Enter file name:')
 		if ok:
-			if self.y != None:
-				df = pandas.DataFrame(data = {"Data" : self.y, "Time" : self.x})
+			if self.y != None and text:
+				df = pandas.DataFrame(data = {"Time" : self.x, "Data" : self.y})
 				df.to_csv("./" + text.replace(" ", "") + ".csv", sep = ',', index = False)
 				self.exportBtn.setText("Data Saved")
 				self.exportBtn.setEnabled(False)
 			else:
-				self.exportBtn.setText("Error!!")
-				self.exportBtn.setEnabled(False)
+				self.exportBtn.setText("Error, Try Again!!")
 		
 
 if __name__ == "__main__":
