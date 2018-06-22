@@ -2,7 +2,9 @@ import sys
 from PyQt4 import QtGui, QtCore
 import pyqtgraph as plt
 from time import strftime
+from datetime import datetime
 import numpy as np
+import pandas
 
 class MainWindow(QtGui.QDialog):
 
@@ -64,13 +66,17 @@ class MainWindow(QtGui.QDialog):
 		self.startBtn = QtGui.QPushButton("Start")
 		self.stopBtn = QtGui.QPushButton("Stop")
 		self.resetBtn = QtGui.QPushButton("Reset")
+		self.exportBtn = QtGui.QPushButton("Export to CSV")
 		self.stopBtn.setEnabled(False)
+		self.exportBtn.setEnabled(False)
 		self.startBtn.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)
 		self.stopBtn.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)
 		self.resetBtn.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)
+		self.exportBtn.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)
 		self.startBtn.clicked.connect(self.startBtnClicked)
 		self.stopBtn.clicked.connect(self.stopBtnClicked)
 		self.resetBtn.clicked.connect(self.resetBtnClicked)
+		self.exportBtn.clicked.connect(self.exportBtnClicked)
 
 
 		# Figure
@@ -83,6 +89,7 @@ class MainWindow(QtGui.QDialog):
 		vbox3.addWidget(gb2, 1)
 		vbox3.addWidget(self.startBtn, 1)
 		vbox3.addWidget(self.stopBtn, 1)
+		vbox3.addWidget(self.exportBtn, 1)
 		vbox3.addWidget(self.resetBtn, 1)
 
 		# Upper Layout
@@ -94,9 +101,18 @@ class MainWindow(QtGui.QDialog):
 		self.lcd1 = QtGui.QLCDNumber()
 		self.lcd1.display(strftime("%M"+":"+"%S"))
 		self.lcd2 = QtGui.QLCDNumber()
+		self.lcd1.display("00:00")
 		self.lcd2.setNumDigits(8)
 		self.lcd1.setSegmentStyle(QtGui.QLCDNumber.Filled)
 		self.lcd2.setSegmentStyle(QtGui.QLCDNumber.Filled)
+		pal1 = self.lcd1.palette()
+		pal1.setColor(pal1.Light, QtGui.QColor(0, 0, 0))
+		pal1.setColor(pal1.Dark, QtGui.QColor(0, 0, 255))
+		self.lcd1.setPalette(pal1)
+		pal2 = self.lcd2.palette()
+		pal2.setColor(pal2.Dark, QtGui.QColor(0, 0, 0))
+		pal2.setColor(pal2.Light, QtGui.QColor(0, 0, 255))
+		self.lcd2.setPalette(pal2)
 		trLabel = QtGui.QLabel("Time Remaining : ")
 		sweepLabel = QtGui.QLabel("Sweep Number :")
 		hbox5 = QtGui.QHBoxLayout()
@@ -160,14 +176,14 @@ class MainWindow(QtGui.QDialog):
 			self.startBtn.setEnabled(False)
 			self.stopBtn.setEnabled(True)
 			i = 0
-			self.x = [0]
-			self.y = [0]
+			self.x = [0] # Time
+			self.y = [0] # PSD
 			self.startBtn.setText("Running...")
-			while(i != 20):
+			while(i != 200):
 				self.lcd2.display(i+2)
 				j = np.random.random()
-				self.x.append(i)
 				self.y.append(j)
+				self.x.append(datetime.now().strftime("%I:%M:%S %p"))
 				self.curve = self.plot.plot()
 				self.curve.setData(self.y)
 				QtGui.QApplication.processEvents()
@@ -176,17 +192,18 @@ class MainWindow(QtGui.QDialog):
 			choice1 = QtGui.QMessageBox.question(self, "Warning", "Enter Frequency Span upto 300MHz", QtGui.QMessageBox.Ok)
 
 		self.startBtn.setText("Finished")
-		self.startBtn.setEnabled(True)
 		self.stopBtn.setEnabled(False)
+		self.exportBtn.setEnabled(True)
 		
-
 	def stopBtnClicked(self):
 		self.startBtn.setEnabled(False)
 		self.startBtn.setText("Terminated")
 		self.stopBtn.setEnabled(False)
+		self.exportBtn.setEnabled(True)
 
 	def resetBtnClicked(self):
 		self.resetBtn.setText("Resetting..")
+		self.lcd1.display("00:00")
 		self.plot.clear()
 		self.sp1.setValue(15)
 		self.sp2.setValue(16)
@@ -194,7 +211,21 @@ class MainWindow(QtGui.QDialog):
 		self.startBtn.setEnabled(True)
 		self.startBtn.setText("Start")
 		self.stopBtn.setEnabled(False)
+		self.lcd2.display(0)
+		self.exportBtn.setEnabled(False)
 		self.resetBtn.setText("Reset")
+
+	def exportBtnClicked(self):
+		text, ok = QtGui.QInputDialog.getText(self, 'Export', 'Enter file name:')
+		if ok:
+			if self.y != None:
+				df = pandas.DataFrame(data = {"Data" : self.y, "Time" : self.x})
+				df.to_csv("./" + text.replace(" ", "") + ".csv", sep = ',', index = False)
+				self.exportBtn.setText("Data Saved")
+				self.exportBtn.setEnabled(False)
+			else:
+				self.exportBtn.setText("Error!!")
+				self.exportBtn.setEnabled(False)
 		
 
 if __name__ == "__main__":
