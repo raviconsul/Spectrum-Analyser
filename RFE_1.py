@@ -1,3 +1,5 @@
+# Add Start & Stop Freq.
+
 import sys
 from PyQt4 import QtGui, QtCore
 import pyqtgraph as plt
